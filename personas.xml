@@ -1,0 +1,12 @@
+<usuarios>
+  <usuario>
+    <login>einis</login>
+    <clave>clave</clave>
+    <alias>einis</alias>
+  </usuario>
+  <usuario>
+    <login>isa</login>
+    <clave>clave</clave>
+    <alias>isa</alias>
+  </usuario>
+</usuarios>
