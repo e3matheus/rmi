@@ -6,7 +6,7 @@ import net.n3.nanoxml.*;
 public class difu {
 
   static String getUsuarios(Hashtable<String, infoUsuario> u) {
-    String aliases = "", str;
+    String aliases = "Usuarios del sistema: \n ", str;
     Set<String> set = u.keySet();
     Iterator<String> itr = set.iterator();
     while (itr.hasNext()) {
@@ -76,16 +76,42 @@ public class difu {
   }
 
   static void enviarMensajes(Hashtable<String, LinkedList<String>> men, String aliasUsu, PrintWriter out) {
-    System.out.println("Entro..");
     LinkedList<String> lm = (LinkedList<String>) men.get(aliasUsu);
     out.println("m");
     out.println("Mensaje(s) recibido(s):");
     for (int i = lm.size(); i > 0; i--){
-      System.out.println("Dentro del ciclo..");
-      out.println(lm.removeFirst());
+      getLine(lm.removeFirst(), out);
     }
     out.println("f");
     men.remove(aliasUsu);
+  }
+
+  static class difuThread extends Thread {
+    public int i;
+
+    difuThread() {
+      super("Thread");
+      i =1;
+    }
+
+    public void run() { 
+      boolean quit = false;
+      InputStreamReader isr = new InputStreamReader(System.in);
+      BufferedReader in = new BufferedReader(isr);
+
+      try {
+        String fromS;
+        while( ! quit ) {
+          if ((fromS = in.readLine()) != null){
+            MultiServerThread.i = fromS;
+          }
+        }
+      } catch (java.io.InterruptedIOException ie) {
+      } catch (IOException e) {
+        System.out.println("Excepcion IOException en in.readln()");
+        System.out.println(e);
+      }
+    }
   }
 
   static class PrintThread extends Thread {
@@ -100,23 +126,46 @@ public class difu {
       this.aU = aliasUsu;
     }
 
+    PrintThread(ThreadGroup group, Socket clientSocket, String aliasUsu, Hashtable<String, LinkedList<String>> men) {
+      super(group, "Thread");
+      this.clientSocket = clientSocket;
+      this.men = men;
+      this.aU = aliasUsu;
+    }
+
     public void run() { 
       PrintWriter out = null;
       boolean quit = false;
 
       try {
         out = new PrintWriter(clientSocket.getOutputStream(), true);
-      }
-      catch (IOException e) {
+
+        while( ! quit ) {
+          if (men.containsKey(aU)) {
+            enviarMensajes(men, aU, out);
+          }
+        }
+
+      } catch (java.io.InterruptedIOException ie) {
+        System.out.println("Muere printthread..");
+      } catch (IOException e) {
         System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
       }
 
-      while( ! quit ) {
-        if (men.containsKey(aU)) {
-          System.out.println("Se supone que envio mensaje..." + aU);
-          enviarMensajes(men, aU, out);
-        }
-      }
+    }
+  }
+
+  static public void getLine(String msg, PrintWriter out){
+    out.println(msg);
+    if (MultiServerThread.i.equals("i")) {
+      System.out.println(msg);
+    } else if  (MultiServerThread.i.equals("f")) {
+
+    } else if  (MultiServerThread.i.equals("q")) {
+      Thread.currentThread().interrupt();
+    } else if  (MultiServerThread.i.equals("")) {
+    } else {
+      System.out.println("Comando no valido");
     }
   }
 
@@ -125,6 +174,7 @@ public class difu {
     private Hashtable<String, infoUsuario> usuarios = new Hashtable<String, infoUsuario>();
     private Hashtable<String, LinkedList<String>> men = new Hashtable<String, LinkedList<String>>();
     private LinkedList<String> conectados = new LinkedList<String>();
+    public static String i = "";
 
     MultiServerThread(Socket clientSocket, Hashtable<String, infoUsuario> usuarios, Hashtable<String, LinkedList<String>> men, LinkedList<String> conectados) {
       super("MultiServerThread");
@@ -134,25 +184,28 @@ public class difu {
       this.conectados = conectados;
     }
 
+    MultiServerThread(ThreadGroup group, String sm, Socket clientSocket, Hashtable<String, infoUsuario> usuarios, Hashtable<String, LinkedList<String>> men, LinkedList<String> conectados) {
+      super(group, sm);
+      this.clientSocket = clientSocket;
+      this.usuarios = usuarios;
+      this.men = men;
+      this.conectados = conectados;
+    }
+
+
     public void run() { 
       BufferedReader in = null;
       PrintWriter out = null;
       String clientRequest, loginUsu = "", aliasUsu = "", mensaje = "";
       boolean quit = false, autenticado = false;
 
+      ThreadGroup gpt = new ThreadGroup("gpt");
+
       try {
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
         out = new PrintWriter(clientSocket.getOutputStream(), true);
-      }
-      catch (IOException e) {
-        System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
-      }
 
-      while( ! quit ) {
-        try {
-
-          new PrintThread(clientSocket, aliasUsu, men).start();
-
+        while( ! quit ) {
           clientRequest = in.readLine();
           if (clientRequest.startsWith("q")) {
             if (autenticado)
@@ -176,6 +229,8 @@ public class difu {
                         infoUsuario iu = (infoUsuario) usuarios.get(loginUsu);
                         aliasUsu = iu.getAlias();
                         conectados.add(aliasUsu);
+                        Thread hilo = new PrintThread(gpt, clientSocket, aliasUsu, men);
+                        hilo.start();
                       }
                     } else {
                       out.println("Una vez ingresado el login debe ingresar la clave para ser autenticado, ingrese de nuevo su login.");
@@ -209,15 +264,19 @@ public class difu {
                             else { 
                               StringTokenizer t = new StringTokenizer(clientRequest.substring(2),"#");  
                               String usu = t.nextToken();
-                              mensaje = "Alias" + aliasUsu + ":" + t.nextToken();
+                              mensaje = "Alias " + aliasUsu + ":" + t.nextToken();
                               agregarMensaje(men, usu, mensaje, conectados);
                             }
                             out.println("Mensaje enviado");
                           }
-
-        } catch (IOException e) {
-          System.out.println("Excepcion E/S en server.in.readLine() " + e);
         }
+      } catch (java.io.InterruptedIOException ie) {
+        System.out.println("Muere multiserverThread" + getName());
+        gpt.interrupt();
+        System.out.println("Muere printThread??");
+        try { in.close(); out.close(); clientSocket.close(); } catch (IOException e) {}
+      } catch (IOException e) {
+        System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
       }
     }
   }
@@ -250,7 +309,6 @@ public class difu {
     ServerSocket server;
     int port = 0;
     String cuentas = "";
-    boolean quit = false;
     Hashtable<String, LinkedList<String>> mensajes = new Hashtable<String, LinkedList<String>>();
     LinkedList<String> conectados = new LinkedList<String>();
 
@@ -277,12 +335,30 @@ public class difu {
     }
 
     try {
-
       Hashtable<String, infoUsuario> usuarios = parseaXML(cuentas);
       server = new ServerSocket(port);
       System.out.println("Servidor difu activado" );
-      while (!quit)
-        new MultiServerThread(server.accept(), usuarios, mensajes, conectados).start();
+      int i = 0;
+      String s = "" + i;
+      ThreadGroup G = new ThreadGroup("grupo");
+      boolean quit = false;
+
+      //Actualiza el valor de la variable estatica del multiserverthread 
+      Thread t = new difuThread();
+      t.start();
+
+      t.interrupt();
+
+      while (!quit){
+        new MultiServerThread(G, s, server.accept(), usuarios, mensajes, conectados).start();
+        if (i ==1){
+          System.out.println("Interrumpo a todos...");
+          G.interrupt();
+          quit = true;
+        }
+        i = i + 1;
+        s = s + i;
+      }
 
     } catch (IOException e) {
       System.out.println("Excepcion E/S en el constructor del servidor: " + e);
