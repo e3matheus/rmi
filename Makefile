@@ -1,5 +1,5 @@
 Cliente:
-	javac usu.java Msg.java infoUsuario.java
+	javac -Xlint usu.java Msg.java infoUsuario.java
 
 Servidor:
 	javac MsgServer.java

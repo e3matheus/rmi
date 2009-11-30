@@ -1,8 +1,9 @@
 import java.util.*;
 
 public class infoUsuario {
+    @SuppressWarnings("unchecked") 
     String clave, alias;
-    LinkedList suscriptores = new LinkedList();
+    LinkedList<String> suscriptores = new LinkedList<String>();
 
     infoUsuario(String clave, String alias) throws Exception {
       this.clave = clave;

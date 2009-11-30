@@ -43,7 +43,7 @@ public class usu {
 
 
   public static boolean comPorArchivo(Msg c, BufferedReader br) {
-    String fromFile = "";
+    String fromFile = "", login = "";
     System.out.println("Ingresando comandos del archivo: ");
     try {
       while ((fromFile =  br.readLine()) != null) {
@@ -51,10 +51,10 @@ public class usu {
           System.out.println(fromFile);
           if (fromFile.equals("q")) {
             System.out.println("Saliendo del sistema");
-            usuThread.quit = true;
+            //usuThread.quit = true;
             return true;
           } else {
-            getResponse(c, fromFile);
+            login = getResponse(c, fromFile, login);
           }
         } else {
           System.out.println("ERROR: '" + fromFile + "' no es un comando valido!");
@@ -68,7 +68,7 @@ public class usu {
     return false;
   }
 
-  //Envia mensajes del servidor.
+  //Imprime los mensajes de este usuario
   static class PrintThread extends Thread {
     private String aU;
     private Msg c;
@@ -82,7 +82,7 @@ public class usu {
       boolean quit = false;
       try {
         while( ! quit ) {
-          if (Msg.men.containsKey(aU)) {
+          if (c.existenMensajes(aU)) {
             System.out.println(c.enviarMensajes(aU));
           }
         }
@@ -92,51 +92,15 @@ public class usu {
     }
   }
 
-  //Imprime Mensajes enviados del servidor.
-  static class usuThread extends Thread {
-    private BufferedReader in;
-    static boolean quit;
-
-    usuThread(BufferedReader in) {
-      super("Thread");
-      this.in = in;
-    }
-
-    public void run() { 
-      quit = false;
-      String fromS = "";
-
-      try {
-        while( ! quit ) {
-          if ((fromS = in.readLine()) != null){
-            if (fromS.equals("m")) {
-              while (!((fromS = in.readLine()).equals("f"))) {
-                System.out.println(fromS);
-              }
-            } else {
-              System.out.println(fromS);
-            } 
-          }
-        }
-      } catch (java.io.InterruptedIOException ie) {
-
-      } catch (IOException e) {
-        System.out.println("Excepcion IOException en in.readln()");
-        System.out.println(e);
-      }
-    }
-  }
-
   public static void comPorConsola(Msg c) {
-    String fromUser = "";
+    String fromUser = "", login= "";
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
     System.out.println("Ingrese comandos: ");
     try {
       while (!(fromUser =  br.readLine()).equals("q")) {
         if (fromUser != null) {
           if (verificarComando(fromUser)) {
-            System.out.println(fromUser);
-            getResponse(c, fromUser);
+            login = getResponse(c, fromUser, login);
           } else {System.out.println("ERROR: '" + fromUser + "' no es un comando valido!");}
         }
       }
@@ -150,17 +114,17 @@ public class usu {
     }
   }
 
-  public static void getResponse(Msg c, String clientRequest) { 
-    String loginUsu = "", aliasUsu = "", mensaje = "";
-    boolean autenticado = false;
-
+  public static String getResponse(Msg c, String clientRequest, String loginUsu) { 
     try {
+    String mensaje = "";
+    boolean autenticado = c.isAutenticado(loginUsu);
+
       InputStreamReader isr = new InputStreamReader(System.in);
       BufferedReader in = new BufferedReader(isr);
 
       if (clientRequest.startsWith("q")) {
         if (autenticado)
-          Msg.conectados.remove(aliasUsu);
+          c.remueveConectados(c.getAlias(loginUsu));
       } else 
         if (!(autenticado) && !(clientRequest.startsWith("l"))) {
           System.out.println("ERROR: Necesita autenticarse en el sistema para emplear este comando!");
@@ -169,7 +133,7 @@ public class usu {
             System.out.println("Usted ya se encuentra autenticado en el sistema");
           } else 
             if (clientRequest.startsWith ("l")) {
-              if (Msg.usuarios.containsKey(clientRequest.substring(2))){
+              if (c.containClave(clientRequest.substring(2))){
                 System.out.println("Emplee el comando para ingresar la clave");
                 String clave = in.readLine();
                 if (clave.startsWith ("c")) {
@@ -177,11 +141,10 @@ public class usu {
                   autenticado = true;
                   if (autenticado) {
                     loginUsu = clientRequest.substring(2);
-                    infoUsuario iu = (infoUsuario) Msg.usuarios.get(loginUsu);
-                    aliasUsu = iu.getAlias();
-                    Msg.conectados.add(aliasUsu);
-                    Thread hilo = new PrintThread(aliasUsu, c);
+                    c.agregaConectados(loginUsu);
+                    Thread hilo = new PrintThread(c.getAlias(loginUsu), c);
                     hilo.start();
+                    System.out.println("Se ha autenticado correctamente.");
                   }
                 } else {
                   System.out.println("Una vez ingresado el login debe ingresar la clave para ser autenticado, ingrese de nuevo su login.");
@@ -197,26 +160,21 @@ public class usu {
                   System.out.println(c.getUsuarios());
                 } else
                   if (autenticado && clientRequest.startsWith("s")) {
-                    System.out.println(c.agregarSuscriptor(aliasUsu, clientRequest.substring(2)));
+                    System.out.println(c.agregarSuscriptor(c.getAlias(loginUsu), clientRequest.substring(2)));
                   } else
                     if (autenticado && clientRequest.startsWith("d")) {		
-                      System.out.println(c.eliminarSuscriptor(aliasUsu,clientRequest.substring(2)));
+                      System.out.println(c.eliminarSuscriptor(c.getAlias(loginUsu),clientRequest.substring(2)));
                     } else
                       if (autenticado && clientRequest.startsWith("m")) {
                         if (clientRequest.substring(2).startsWith("#")) {
-                          mensaje = "Alias " + aliasUsu + ":" + clientRequest.substring(3);
-                          //getSuscriptores(loginUsu);                              
-                          infoUsuario u = (infoUsuario) Msg.usuarios.get(loginUsu);
-                          LinkedList l = u.getSuscriptores();
-                          Iterator itr = l.iterator();
-                          while (itr.hasNext()) 
-                            c.agregarMensaje((String) itr.next(), mensaje);
+                          c.agregarMensajeMultiple(loginUsu, clientRequest);
                         }
                         else { 
                           StringTokenizer t = new StringTokenizer(clientRequest.substring(2),"#");  
                           String usu = t.nextToken();
-                          mensaje = "Alias " + aliasUsu + ":" + t.nextToken();
+                          mensaje = "Alias " + c.getAlias(loginUsu) + ":" + t.nextToken();
                           c.agregarMensaje(usu, mensaje);
+                          System.out.println(usu);
                         }
                         System.out.println("Mensaje enviado");
                       }
@@ -225,6 +183,8 @@ public class usu {
     } catch (IOException e) {
       System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
     }
+
+    return loginUsu;
   }
 
   public static void main(String[] args) {
@@ -265,8 +225,6 @@ public class usu {
       }
 
       Msg c = (Msg) Naming.lookup("rmi://" + host + ":" + port + "/MsgService"); 
-
-
       // Imprime los mensajes de este usuario, que recibe del servidor. 
       //       Thread t = new usuThread(in);
       //        t.start();
