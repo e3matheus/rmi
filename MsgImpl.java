@@ -122,6 +122,22 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     return aliases;
   }
 
+  public boolean isAutenticado(String alias) throws java.rmi.RemoteException{
+    infoUsuario iu = usuarios.get(alias);
+    if (iu != null)
+      return iu.getConectado();
+    else
+      return false;
+  }
+  
+  public void desautentica(String alias) throws java.rmi.RemoteException{
+    infoUsuario iu = usuarios.get(alias);
+    if (iu != null)
+      iu.setConectado(false);
+  }
+
+
+
   public boolean containClave(String login)throws java.rmi.RemoteException{
     return usuarios.containsKey(login);
   } 

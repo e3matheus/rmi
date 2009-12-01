@@ -20,6 +20,10 @@ extends java.rmi.Remote {
 
   public boolean containClave(String s) throws java.rmi.RemoteException;
 
+  public boolean isAutenticado(String alias)  throws java.rmi.RemoteException;
+
+  public void desautentica(String alias) throws java.rmi.RemoteException;
+
   public void agregarMensajeMultiple(String loginUsu, String clientRequest) throws java.rmi.RemoteException;
 
   public void conectaUsu(String alias)throws java.rmi.RemoteException;

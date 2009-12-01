@@ -9,21 +9,21 @@ public class usu {
   static String i;
 
   static String autenticarU(Msg c, String login, String clave, ThreadGroup gpt) throws java.rmi.RemoteException {
-      String alias = c.autenticarUsuario(login,clave);
-      if (alias == null) {
-        System.out.println("No se encuentra el login especificado!");
+    String alias = c.autenticarUsuario(login,clave);
+    if (alias == null) {
+      System.out.println("No se encuentra el login especificado!");
+      return "";
+    } else 
+      if (alias.equals("")) {
+        System.out.println("Clave incorrecta!");
         return alias;
-      } else 
-        if (alias.equals("")) {
-          System.out.println("Clave incorrecta!");
-          return null;
-        } else {
-          c.conectaUsu(alias);
-          new PrintThread(gpt, alias, c).start();
-          System.out.println("Ha sido autenticado exitosamente en el sistema");
-          return alias;
-        }
-    }
+      } else {
+        c.conectaUsu(alias);
+        new PrintThread(gpt, alias, c).start();
+        System.out.println("Ha sido autenticado exitosamente en el sistema");
+        return alias;
+      }
+  }
 
   public static boolean verificarComando(String comando){
     if (comando.equals("q") || comando.equals("u"))
@@ -131,10 +131,10 @@ public class usu {
           if (c.existenMensajes(aU)) {
             System.out.println(c.enviarMensajes(aU));
           }
-					if ((Thread.currentThread().isInterrupted()))
-						{
+          if ((Thread.currentThread().isInterrupted()))
+          {
             quit = true;
-            }
+          }
         }
       } catch (IOException e) {
         System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
@@ -144,52 +144,50 @@ public class usu {
 
   public static String getResponse(Msg c, String clientRequest, String aliasUsu, ThreadGroup gpt) { 
     try {
-    String mensaje = "";
-    boolean autenticado = (aliasUsu != "");
+      String mensaje = "";
+      boolean autenticado = (!aliasUsu.equals("") && c.isAutenticado(aliasUsu));
       InputStreamReader isr = new InputStreamReader(System.in);
       BufferedReader in = new BufferedReader(isr);
 
       if (clientRequest.startsWith("q")) {
         if (autenticado)
           c.desconectaUsu(aliasUsu);
-      } else 
-           if (clientRequest.startsWith ("l")) {
-              if (!autenticado) {
-                String login = clientRequest.substring(2);
-                System.out.println("Emplee el comando para ingresar la clave");
-                String clave = in.readLine();
-                if (clave.startsWith ("c") && clave.length() > 2)
-                  aliasUsu = autenticarU(c, login, clave.substring(2), gpt);
-                else 
-                  System.out.println("Una vez ingresado el login debe ingresar la clave para ser autenticado, ingrese de nuevo su login.");
-              } else 
-                System.out.println("login no registrado en el sistema");
-            } else 
-              if (clientRequest.startsWith ("c")) {
-                System.out.println("Primero debe ingresar el login para poder asociarlo a su clave");
-              } else 
-                if (autenticado && clientRequest.equals("u")) {
-                  System.out.println(c.getUsuarios());
-                } else
-                  if (autenticado && clientRequest.startsWith("s")) {
-                    System.out.println(c.agregarSuscriptor(aliasUsu, clientRequest.substring(2)));
-                  } else
-                    if (autenticado && clientRequest.startsWith("d")) {		
-                      System.out.println(c.eliminarSuscriptor(aliasUsu,clientRequest.substring(2)));
-                    } else
-                      if (autenticado && clientRequest.startsWith("m")) {
-                        if (clientRequest.substring(2).startsWith("#")) {
-                          c.agregarMensajeMultiple(aliasUsu, clientRequest);
-                        }
-                        else { 
-                          StringTokenizer t = new StringTokenizer(clientRequest.substring(2),"#");  
-                          String usu = t.nextToken();
-                          mensaje = "Alias " + aliasUsu + ":" + t.nextToken();
-                          c.agregarMensaje(usu, mensaje);
-                          System.out.println(usu);
-                        }
-                        System.out.println("Mensaje enviado");
-                      }
+      } else if (clientRequest.startsWith ("x")) {  
+          System.out.println("Desautenticado del sistema.");
+          //Si no estoy autenticado, no puede recibir mensaje.
+          gpt.interrupt();
+          c.desautentica(aliasUsu);
+      } else if (clientRequest.startsWith ("l")) {
+        if (!autenticado) {
+          String login = clientRequest.substring(2);
+          System.out.println("Emplee el comando para ingresar la clave");
+          String clave = in.readLine();
+          if (clave.startsWith ("c") && clave.length() > 2)
+            aliasUsu = autenticarU(c, login, clave.substring(2), gpt);
+          else 
+            System.out.println("Una vez ingresado el login debe ingresar la clave para ser autenticado, ingrese de nuevo su login.");
+        } else 
+          System.out.println("login " + aliasUsu + " no registrado en el sistema");
+      } else if (clientRequest.startsWith ("c")) {
+          System.out.println("Primero debe ingresar el login para poder asociarlo a su clave");
+      } else if (autenticado && clientRequest.equals("u")) {
+          System.out.println(c.getUsuarios());
+      } else if (autenticado && clientRequest.startsWith("s")) {
+          System.out.println(c.agregarSuscriptor(aliasUsu, clientRequest.substring(2)));
+      } else if (autenticado && clientRequest.startsWith("d")) {		
+          System.out.println(c.eliminarSuscriptor(aliasUsu,clientRequest.substring(2)));
+      } else if (autenticado && clientRequest.startsWith("m")) {
+        if (clientRequest.substring(2).startsWith("#")) {
+          c.agregarMensajeMultiple(aliasUsu, clientRequest);
+        } else { 
+          StringTokenizer t = new StringTokenizer(clientRequest.substring(2),"#");  
+          String usu = t.nextToken();
+          mensaje = "Alias " + aliasUsu + ":" + t.nextToken();
+          c.agregarMensaje(usu, mensaje);
+          System.out.println(usu);
+        }
+        System.out.println("Mensaje enviado");
+      }
     } catch (java.io.InterruptedIOException ie) {
       gpt.interrupt();
     } catch (IOException e) {
