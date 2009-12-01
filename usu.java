@@ -119,7 +119,7 @@ public class usu {
     }
 
     PrintThread(ThreadGroup gpt, String aliasUsu, Msg c) {
-      super(gpt, "Thread");
+      super(gpt, aliasUsu);
       this.aU = aliasUsu;
       this.c = c;
     }
@@ -131,8 +131,10 @@ public class usu {
           if (c.existenMensajes(aU)) {
             System.out.println(c.enviarMensajes(aU));
           }
-					if ( !(Thread.currentThread().isInterrupted()))
-						quit = true;
+					if ((Thread.currentThread().isInterrupted()))
+						{
+            quit = true;
+            }
         }
       } catch (IOException e) {
         System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);

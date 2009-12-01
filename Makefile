@@ -1,10 +1,22 @@
+Aute: autenticar
+	javac -Xlint aute.java
+
+autenticar: AutenticadorImpl
+	rmic AutenticadorImpl
+
+AutenticadorImpl: Autenticador
+	javac AutenticadorImpl.java
+
+Autenticador: Cliente
+	javac Autenticador.java
+
 Cliente: Servidor
 	javac -Xlint usu.java Msg.java infoUsuario.java
 
-Servidor: stub
+Servidor: stub_mensaje
 	javac difu.java
 
-stub: MsgImpl
+stub_mensaje: MsgImpl
 	rmic MsgImpl
 
 MsgImpl: Msg

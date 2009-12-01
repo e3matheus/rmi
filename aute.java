@@ -19,7 +19,6 @@ public class aute {
 	
 	public static Hashtable<String, String[]> parseaXML(String c) throws Exception {
 		String login, clave, alias;
-		String[] us1 = new String[2];
 		IXMLElement child;
 		IXMLParser parser = XMLParserFactory.createDefaultXMLParser(); 
 		IXMLReader reader = StdXMLReader.fileReader(c); 
@@ -28,6 +27,7 @@ public class aute {
 		Hashtable<String, String[]> hash = new Hashtable<String, String[]>();
 		Enumeration <IXMLElement> enume = (Enumeration<IXMLElement>) xml.enumerateChildren();
 		while (enume.hasMoreElements()) {
+		  String[] us1 = new String[2];
 			child = enume.nextElement();
 			login = child.getChildAtIndex(0).getContent();
 			clave = child.getChildAtIndex(1).getContent();
@@ -38,6 +38,7 @@ public class aute {
 			hash.put(login, us1);
 		}
 
+			System.out.println("fin");
 		return hash;
 	}
   
@@ -68,15 +69,6 @@ public class aute {
 
 		try {
 		Hashtable<String, String[]> lc = parseaXML(cuentas);
-		System.out.println();
-		Set<String> set = lc.keySet();
-		Iterator<String> itr = set.iterator();
-		String str = "";
-		while (itr.hasNext()) {
-			str = itr.next();
-			String[] inf = lc.get(str);
-			System.out.println(str+" "+inf[0]+" "+inf[1]);
-		}
 		new aute(port, lc);
 		} catch (Exception e) {
 			System.out.println("Error al crear la estructura de la informacion de las cuentas de los usuarios");

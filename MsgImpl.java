@@ -140,8 +140,8 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
 
    public boolean existenMensajes(String alias)throws java.rmi.RemoteException{
     infoUsuario iu = usuarios.get(alias);
+//    System.out.println("El alias es " + alias + ", tienen " + iu.mensajes.size()+ "mensajes.");
     if (iu.mensajes.size() != 0){ 
-      System.out.println(iu.mensajes.size());
       return true;
     }
     else   
