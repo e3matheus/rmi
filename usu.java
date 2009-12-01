@@ -6,6 +6,8 @@ import java.util.*;
 import java.io.*;
 
 public class usu {
+  static String i;
+
   public static boolean verificarComando(String comando){
     if (comando.equals("q") || comando.equals("u"))
       return true;
@@ -44,6 +46,7 @@ public class usu {
 
   public static boolean comPorArchivo(Msg c, BufferedReader br) {
     String fromFile = "", login = "";
+    ThreadGroup gpt = new ThreadGroup("gpt");
     System.out.println("Ingresando comandos del archivo: ");
     try {
       while ((fromFile =  br.readLine()) != null) {
@@ -51,10 +54,9 @@ public class usu {
           System.out.println(fromFile);
           if (fromFile.equals("q")) {
             System.out.println("Saliendo del sistema");
-            //usuThread.quit = true;
             return true;
           } else {
-            login = getResponse(c, fromFile, login);
+            login = getResponse(c, fromFile, login, gpt);
           }
         } else {
           System.out.println("ERROR: '" + fromFile + "' no es un comando valido!");
@@ -78,6 +80,12 @@ public class usu {
       this.c = c;
     }
 
+    PrintThread(ThreadGroup gpt, String aliasUsu, Msg c) {
+      super(gpt, "Thread");
+      this.aU = aliasUsu;
+      this.c = c;
+    }
+
     public void run() { 
       boolean quit = false;
       try {
@@ -85,6 +93,8 @@ public class usu {
           if (c.existenMensajes(aU)) {
             System.out.println(c.enviarMensajes(aU));
           }
+					if ( !(Thread.currentThread().isInterrupted()))
+						quit = true;
         }
       } catch (IOException e) {
         System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
@@ -95,16 +105,19 @@ public class usu {
   public static void comPorConsola(Msg c) {
     String fromUser = "", login= "";
     BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    ThreadGroup gpt = new ThreadGroup("gpt");
     System.out.println("Ingrese comandos: ");
     try {
       while (!(fromUser =  br.readLine()).equals("q")) {
         if (fromUser != null) {
           if (verificarComando(fromUser)) {
-            login = getResponse(c, fromUser, login);
+            login = getResponse(c, fromUser, login, gpt);
           } else {System.out.println("ERROR: '" + fromUser + "' no es un comando valido!");}
         }
       }
       System.out.println("Saliendo del sistema");
+      gpt.interrupt();
+			//System.exit(1);
       // usuThread.quit = true;
       //out.println(fromUser);
     }
@@ -114,7 +127,7 @@ public class usu {
     }
   }
 
-  public static String getResponse(Msg c, String clientRequest, String loginUsu) { 
+  public static String getResponse(Msg c, String clientRequest, String loginUsu, ThreadGroup gpt) { 
     try {
     String mensaje = "";
     boolean autenticado = c.isAutenticado(loginUsu);
@@ -142,7 +155,7 @@ public class usu {
                   if (autenticado) {
                     loginUsu = clientRequest.substring(2);
                     c.agregaConectados(loginUsu);
-                    Thread hilo = new PrintThread(c.getAlias(loginUsu), c);
+                    Thread hilo = new PrintThread(gpt, c.getAlias(loginUsu), c);
                     hilo.start();
                     System.out.println("Se ha autenticado correctamente.");
                   }
@@ -179,7 +192,7 @@ public class usu {
                         System.out.println("Mensaje enviado");
                       }
     } catch (java.io.InterruptedIOException ie) {
-      //gpt.interrupt();
+      gpt.interrupt();
     } catch (IOException e) {
       System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
     }

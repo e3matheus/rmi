@@ -10,16 +10,17 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
   public Hashtable<String, LinkedList<String>> men = new Hashtable<String, LinkedList<String>>();
   // Alias
   public LinkedList<String> conectados = new LinkedList<String>();
+  public static String i = "";
 
   // Implementations must have an 
   //explicit constructor
   // in order to declare the 
   //RemoteException exception
-  public MsgImpl()
+  public MsgImpl(String cuenta)
     throws java.rmi.RemoteException {
       super();
       try {
-        usuarios = parseaXML("personas.xml"); 
+        this.usuarios = parseaXML(cuenta); 
         //System.out.println(usuarios.toString());
       } catch (Exception e) {
       }
@@ -50,6 +51,17 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     return hash;
   }
 
+  static public void getLine(String msg){
+    if (i.equals("i")) {
+      System.out.println(msg);
+    } else if (i.equals("f")) {
+    } else if (i.equals("q")) {
+    } else if (i.equals("")) {
+    } else {
+      System.out.println("Comando no valido");
+    }
+  }
+
   public String enviarMensajes(String aliasUsu) throws java.rmi.RemoteException{
     String ret;
     LinkedList<String> lm = men.get(aliasUsu);
@@ -59,6 +71,8 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     for (int i = lm.size(); i > 0; i--){
       ret += lm.removeFirst();
     }
+    
+    getLine(ret);
     //ret += "f";
     men.remove(aliasUsu);
     return ret;
