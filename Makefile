@@ -1,14 +1,14 @@
-Cliente:
+Cliente: Servidor
 	javac -Xlint usu.java Msg.java infoUsuario.java
 
-Servidor:
-	javac MsgServer.java
+Servidor: stub
+	javac difu.java
 
 stub: MsgImpl
 	rmic MsgImpl
 
 MsgImpl: Msg
-	javac MsgImpl.java Msg.java infoUsuario.java
+	javac -Xlint MsgImpl.java Msg.java infoUsuario.java
 
 Msg:
 	javac Msg.java infoUsuario.java

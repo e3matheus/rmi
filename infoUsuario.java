@@ -1,21 +1,39 @@
 import java.util.*;
 
 public class infoUsuario {
-    @SuppressWarnings("unchecked") 
-    String clave, alias;
-    LinkedList<String> suscriptores = new LinkedList<String>();
+    boolean conectado, autenticado;
+    LinkedList<String> suscriptores;
+    LinkedList<String> mensajes;
 
-    infoUsuario(String clave, String alias) throws Exception {
-      this.clave = clave;
-      this.alias = alias;
+    infoUsuario() {
+      conectado = false;
+      autenticado = false;
+      suscriptores = new LinkedList<String>();
+      mensajes = new LinkedList<String>();
     }
 
-    String getAlias() {
-      return alias;
+    boolean getConectado() {
+      return conectado;
     }
 
-    LinkedList getSuscriptores() {
+    void setConectado(boolean b){
+      conectado = b;
+    }
+
+    boolean getAutenticado() {
+      return autenticado;
+    }
+
+    void setAutenticado(boolean b){
+      autenticado = b;
+    }
+
+    LinkedList<String> getSuscriptores() {
       return suscriptores;
+    }
+
+    LinkedList<String> getMensajes() {
+      return mensajes;
     }
 
     boolean agregarS(String susc) {
@@ -30,5 +48,18 @@ public class infoUsuario {
         suscriptores.remove(susc);
         return true;
       } else {return false;}
+    }
+
+    //Agregar Mensajes	
+    void agregarM(String msj) {
+      mensajes.add(msj);
+      return;
+    }
+
+    //Obtener primer mensaje
+    String obtenerM(){
+      if (mensajes.size() > 0)
+        return mensajes.removeFirst();
+      else return null;
     }
 }

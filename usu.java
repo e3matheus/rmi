@@ -8,6 +8,23 @@ import java.io.*;
 public class usu {
   static String i;
 
+  static String autenticarU(Msg c, String login, String clave, ThreadGroup gpt) throws java.rmi.RemoteException {
+      String alias = c.autenticarUsuario(login,clave);
+      if (alias == null) {
+        System.out.println("No se encuentra el login especificado!");
+        return alias;
+      } else 
+        if (alias.equals("")) {
+          System.out.println("Clave incorrecta!");
+          return null;
+        } else {
+          c.conectaUsu(alias);
+          new PrintThread(gpt, alias, c).start();
+          System.out.println("Ha sido autenticado exitosamente en el sistema");
+          return alias;
+        }
+    }
+
   public static boolean verificarComando(String comando){
     if (comando.equals("q") || comando.equals("u"))
       return true;
@@ -43,9 +60,30 @@ public class usu {
           return false;
   }
 
+  public static void comPorConsola(Msg c) {
+    String fromUser = "", alias= "";
+    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+    ThreadGroup gpt = new ThreadGroup("gpt");
+    System.out.println("Ingrese comandos: ");
+    try {
+      while (!(fromUser =  br.readLine()).equals("q")) {
+        if (fromUser != null) {
+          if (verificarComando(fromUser)) {
+            alias = getResponse(c, fromUser, alias, gpt);
+          } else {System.out.println("ERROR: '" + fromUser + "' no es un comando valido!");}
+        }
+      }
+      System.out.println("Saliendo del sistema");
+      gpt.interrupt();
+    }
+    catch (IOException e) {
+      System.out.println("Excepcion IOException en br.readln()");
+      System.out.println(e);
+    }
+  }
 
   public static boolean comPorArchivo(Msg c, BufferedReader br) {
-    String fromFile = "", login = "";
+    String fromFile = "", alias = "";
     ThreadGroup gpt = new ThreadGroup("gpt");
     System.out.println("Ingresando comandos del archivo: ");
     try {
@@ -56,7 +94,7 @@ public class usu {
             System.out.println("Saliendo del sistema");
             return true;
           } else {
-            login = getResponse(c, fromFile, login, gpt);
+            alias = getResponse(c, fromFile, alias, gpt);
           }
         } else {
           System.out.println("ERROR: '" + fromFile + "' no es un comando valido!");
@@ -102,69 +140,28 @@ public class usu {
     }
   }
 
-  public static void comPorConsola(Msg c) {
-    String fromUser = "", login= "";
-    BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-    ThreadGroup gpt = new ThreadGroup("gpt");
-    System.out.println("Ingrese comandos: ");
-    try {
-      while (!(fromUser =  br.readLine()).equals("q")) {
-        if (fromUser != null) {
-          if (verificarComando(fromUser)) {
-            login = getResponse(c, fromUser, login, gpt);
-          } else {System.out.println("ERROR: '" + fromUser + "' no es un comando valido!");}
-        }
-      }
-      System.out.println("Saliendo del sistema");
-      gpt.interrupt();
-			//System.exit(1);
-      // usuThread.quit = true;
-      //out.println(fromUser);
-    }
-    catch (IOException e) {
-      System.out.println("Excepcion IOException en br.readln()");
-      System.out.println(e);
-    }
-  }
-
-  public static String getResponse(Msg c, String clientRequest, String loginUsu, ThreadGroup gpt) { 
+  public static String getResponse(Msg c, String clientRequest, String aliasUsu, ThreadGroup gpt) { 
     try {
     String mensaje = "";
-    boolean autenticado = c.isAutenticado(loginUsu);
-
+    boolean autenticado = (aliasUsu != "");
       InputStreamReader isr = new InputStreamReader(System.in);
       BufferedReader in = new BufferedReader(isr);
 
       if (clientRequest.startsWith("q")) {
         if (autenticado)
-          c.remueveConectados(c.getAlias(loginUsu));
+          c.desconectaUsu(aliasUsu);
       } else 
-        if (!(autenticado) && !(clientRequest.startsWith("l"))) {
-          System.out.println("ERROR: Necesita autenticarse en el sistema para emplear este comando!");
-        } else 
-          if (autenticado && clientRequest.startsWith("l") || clientRequest.startsWith("c")) {
-            System.out.println("Usted ya se encuentra autenticado en el sistema");
-          } else 
-            if (clientRequest.startsWith ("l")) {
-              if (c.containClave(clientRequest.substring(2))){
+           if (clientRequest.startsWith ("l")) {
+              if (!autenticado) {
+                String login = clientRequest.substring(2);
                 System.out.println("Emplee el comando para ingresar la clave");
                 String clave = in.readLine();
-                if (clave.startsWith ("c")) {
-                  //autenticado = autenticarUsuario(usuarios, clientRequest.substring(2), clave.substring(2), out);
-                  autenticado = true;
-                  if (autenticado) {
-                    loginUsu = clientRequest.substring(2);
-                    c.agregaConectados(loginUsu);
-                    Thread hilo = new PrintThread(gpt, c.getAlias(loginUsu), c);
-                    hilo.start();
-                    System.out.println("Se ha autenticado correctamente.");
-                  }
-                } else {
+                if (clave.startsWith ("c") && clave.length() > 2)
+                  aliasUsu = autenticarU(c, login, clave.substring(2), gpt);
+                else 
                   System.out.println("Una vez ingresado el login debe ingresar la clave para ser autenticado, ingrese de nuevo su login.");
-                }
-              } else {
+              } else 
                 System.out.println("login no registrado en el sistema");
-              }
             } else 
               if (clientRequest.startsWith ("c")) {
                 System.out.println("Primero debe ingresar el login para poder asociarlo a su clave");
@@ -173,19 +170,19 @@ public class usu {
                   System.out.println(c.getUsuarios());
                 } else
                   if (autenticado && clientRequest.startsWith("s")) {
-                    System.out.println(c.agregarSuscriptor(c.getAlias(loginUsu), clientRequest.substring(2)));
+                    System.out.println(c.agregarSuscriptor(aliasUsu, clientRequest.substring(2)));
                   } else
                     if (autenticado && clientRequest.startsWith("d")) {		
-                      System.out.println(c.eliminarSuscriptor(c.getAlias(loginUsu),clientRequest.substring(2)));
+                      System.out.println(c.eliminarSuscriptor(aliasUsu,clientRequest.substring(2)));
                     } else
                       if (autenticado && clientRequest.startsWith("m")) {
                         if (clientRequest.substring(2).startsWith("#")) {
-                          c.agregarMensajeMultiple(loginUsu, clientRequest);
+                          c.agregarMensajeMultiple(aliasUsu, clientRequest);
                         }
                         else { 
                           StringTokenizer t = new StringTokenizer(clientRequest.substring(2),"#");  
                           String usu = t.nextToken();
-                          mensaje = "Alias " + c.getAlias(loginUsu) + ":" + t.nextToken();
+                          mensaje = "Alias " + aliasUsu + ":" + t.nextToken();
                           c.agregarMensaje(usu, mensaje);
                           System.out.println(usu);
                         }
@@ -197,7 +194,7 @@ public class usu {
       System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
     }
 
-    return loginUsu;
+    return aliasUsu;
   }
 
   public static void main(String[] args) {
@@ -238,16 +235,11 @@ public class usu {
       }
 
       Msg c = (Msg) Naming.lookup("rmi://" + host + ":" + port + "/MsgService"); 
-      // Imprime los mensajes de este usuario, que recibe del servidor. 
-      //       Thread t = new usuThread(in);
-      //        t.start();
 
       if (!a)
         comPorConsola(c);
       else if (!comPorArchivo(c, br))
         comPorConsola(c);
-
-      //t.interrupt();
     }
     catch (MalformedURLException murle) {
       System.out.println();
