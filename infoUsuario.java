@@ -12,7 +12,6 @@ public class infoUsuario {
       autenticado = false;
       suscriptores = new LinkedList<String>();
       mensajes = new LinkedList<String>();
-			lastConnection = Calendar.getInstance();
     }
 
     boolean getConectado() {
@@ -27,10 +26,14 @@ public class infoUsuario {
 
 		String getIntervalo(){
 			Calendar cal = Calendar.getInstance();
+      if (lastConnection == null)
+        lastConnection = cal;
 			long miliseconds = cal.getTimeInMillis() - lastConnection.getTimeInMillis();
 			long Hours = miliseconds / (1000*60*60);
 			long Minutes = (miliseconds % (1000*60*60)) / (1000*60);
 			long Seconds = ((miliseconds % (1000*60*60)) % (1000*60)) / 1000;
+      if (lastConnection == cal)
+        lastConnection = null;
 			return " " + Hours + " horas, " + Minutes + " minutos and " + Seconds +" segundos.\n";
 		}
 
