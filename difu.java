@@ -3,6 +3,7 @@ import java.rmi.registry.LocateRegistry;
 import java.io.*;
 import java.util.*;
 import java.rmi.NotBoundException;
+import java.net.MalformedURLException;
 
 public class difu {
 
@@ -18,7 +19,26 @@ public class difu {
       //     akarso, y en el puerto 21000
       Naming.rebind("rmi://localhost:" + port + "/MsgService", c);
 
-
+      InputStreamReader isr = new InputStreamReader(System.in);
+      BufferedReader in = new BufferedReader(isr);
+      boolean quit = false;
+      String fromS;
+      while( ! quit ) {
+        if ((fromS = in.readLine()) != null){
+          if (fromS.equals("i") || fromS.equals("f"))  
+            MsgImpl.i = fromS;
+          else if (fromS.equals("q"))
+            System.exit(1);
+          else if (fromS.equals("v"))
+            System.out.println(c.pruebaAute());
+        }
+      }
+      System.out.println("Hasta luego.");
+      in.close();
+    } catch (MalformedURLException nbe) {
+    } catch (IOException e) {
+      System.out.println("Excepcion IOException en in.readln()");
+      System.out.println(e);
     } catch (Exception e) {
       System.out.println("Trouble: " + e);
     }
@@ -59,28 +79,18 @@ public class difu {
       Autenticador a = (Autenticador) Naming.lookup("rmi://"+auteHost+":"+autePort+"/auteService");
       new difu(a, difuPort);
 
-      InputStreamReader isr = new InputStreamReader(System.in);
-      BufferedReader in = new BufferedReader(isr);
-      String fromS;
-      while( ! quit ) {
-        if ((fromS = in.readLine()) != null){
-          if (fromS.equals("i") || fromS.equals("f"))  
-            MsgImpl.i = fromS;
-          else if (fromS.equals("q"))
-            System.exit(1);
-        }
-      }
-      System.out.println("Hasta luego.");
-      in.close();
-    } catch (java.io.InterruptedIOException ie) {
-    } catch (IOException e) {
-      System.out.println("Excepcion IOException en in.readln()");
-      System.out.println(e);
+    } catch (MalformedURLException nbe) {
+      System.out.println();
+      System.out.println(
+          "URL incorrecto");
+      System.out.println(nbe);
     } catch (NotBoundException nbe) {
       System.out.println();
       System.out.println(
           "NotBoundException");
       System.out.println(nbe);
+    } catch (Exception e) {
+      System.out.println("Trouble: " + e);
     }
 
   }

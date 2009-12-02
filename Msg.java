@@ -2,8 +2,11 @@ import java.util.*;
 
 public interface Msg
 extends java.rmi.Remote {
+
   public static Hashtable usuarios = new Hashtable();
+
   public static Hashtable<String, LinkedList<String>> men = new Hashtable<String, LinkedList<String>>();
+
   public static LinkedList<String> conectados = new LinkedList<String>();
 
   public String enviarMensajes(String aliasUsu) throws java.rmi.RemoteException;
@@ -32,5 +35,8 @@ extends java.rmi.Remote {
 
   public void desconectaUsu(String alias)throws java.rmi.RemoteException;
 
-  public boolean existenMensajes(String alias)throws java.rmi.RemoteException;
+  public boolean existenMensajes(String alias) throws java.rmi.RemoteException;
+
+  public boolean pruebaAute() throws java.rmi.RemoteException;
+
 }

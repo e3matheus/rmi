@@ -137,8 +137,6 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     return aliases;
   }
 
-
-
   public boolean isAutenticado(String alias) throws java.rmi.RemoteException{
     infoUsuario iu = usuarios.get(alias);
     if (iu != null)
@@ -152,8 +150,6 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     if (iu != null)
       iu.setConectado(false);
   }
-
-
 
   public boolean containClave(String login)throws java.rmi.RemoteException{
     return usuarios.containsKey(login);
@@ -181,4 +177,12 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
       return false;
   }
 
+  public boolean pruebaAute() throws java.rmi.RemoteException{
+    try { 
+      LinkedList<String> l = a.getAliases();
+      return true;
+    } catch (Exception e){
+      return false;
+    }
+  }
  }
