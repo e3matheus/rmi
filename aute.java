@@ -25,7 +25,7 @@ public class aute {
 		parser.setReader(reader); 
 		IXMLElement xml = (IXMLElement) parser.parse();
 		Hashtable<String, String[]> hash = new Hashtable<String, String[]>();
-		Enumeration <IXMLElement> enume = (Enumeration<IXMLElement>) xml.enumerateChildren();
+		Enumeration<IXMLElement> enume = (Enumeration<IXMLElement>) xml.enumerateChildren();
 		while (enume.hasMoreElements()) {
 		  String[] us1 = new String[2];
 			child = enume.nextElement();

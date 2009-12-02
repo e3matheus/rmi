@@ -26,7 +26,7 @@ public class usu {
   }
 
   public static boolean verificarComando(String comando){
-    if (comando.equals("q") || comando.equals("u"))
+    if (comando.equals("q") || comando.equals("a") || comando.equals("f")|| comando.equals("x") )
       return true;
     else 
       if ((comando.startsWith ("l") || comando.startsWith("c") || comando.startsWith("s") || comando.startsWith("d")) && comando.length() > 2)
@@ -74,7 +74,11 @@ public class usu {
         }
       }
       System.out.println("Saliendo del sistema");
-      gpt.interrupt();
+      boolean autenticado = (!alias.equals("") && c.isAutenticado(alias));
+      if (autenticado){
+        c.desconectaUsu(alias);
+				gpt.interrupt();
+			}
     }
     catch (IOException e) {
       System.out.println("Excepcion IOException en br.readln()");
@@ -137,7 +141,7 @@ public class usu {
           }
         }
       } catch (IOException e) {
-        System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
+        System.out.println("Excepcion E/S: " + e);
       }
     }
   }
@@ -150,13 +154,13 @@ public class usu {
       BufferedReader in = new BufferedReader(isr);
 
       if (clientRequest.startsWith("q")) {
+					System.out.println("terminando..");	
         if (autenticado)
           c.desconectaUsu(aliasUsu);
-      } else if (clientRequest.startsWith ("x")) {  
-          System.out.println("Desautenticado del sistema.");
-          //Si no estoy autenticado, no puede recibir mensaje.
+      } else if (clientRequest.startsWith ("x")) {
           gpt.interrupt();
           c.desautentica(aliasUsu);
+					System.out.println("Desautenticado " + aliasUsu);
       } else if (clientRequest.startsWith ("l")) {
         if (!autenticado) {
           String login = clientRequest.substring(2);
@@ -170,8 +174,10 @@ public class usu {
           System.out.println("login " + aliasUsu + " no registrado en el sistema");
       } else if (clientRequest.startsWith ("c")) {
           System.out.println("Primero debe ingresar el login para poder asociarlo a su clave");
-      } else if (autenticado && clientRequest.equals("u")) {
-          System.out.println(c.getUsuarios());
+      } else if (autenticado && clientRequest.equals("a")) {
+          System.out.println(c.getUsuariosCA());
+      } else if (autenticado && clientRequest.equals("f")) {
+          System.out.println(c.getUsuariosNCA());
       } else if (autenticado && clientRequest.startsWith("s")) {
           System.out.println(c.agregarSuscriptor(aliasUsu, clientRequest.substring(2)));
       } else if (autenticado && clientRequest.startsWith("d")) {		
@@ -191,7 +197,7 @@ public class usu {
     } catch (java.io.InterruptedIOException ie) {
       gpt.interrupt();
     } catch (IOException e) {
-      System.out.println("Excepcion E/S en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
+      System.out.println("Excepcion E/S en RESPONSE en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
     }
 
     return aliasUsu;

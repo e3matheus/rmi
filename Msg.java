@@ -16,7 +16,9 @@ extends java.rmi.Remote {
 
   public String autenticarUsuario(String login, String clave)throws java.rmi.RemoteException ;
 
-  public String getUsuarios() throws java.rmi.RemoteException;
+  public String getUsuariosCA() throws java.rmi.RemoteException;
+  
+	public String getUsuariosNCA() throws java.rmi.RemoteException;
 
   public boolean containClave(String s) throws java.rmi.RemoteException;
 

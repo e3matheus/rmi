@@ -5,6 +5,7 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
   public Hashtable<String, infoUsuario> usuarios = new Hashtable<String, infoUsuario>();
   public static String i = "";
   public Autenticador a;
+	public Date lastConnection;
 
   // Implementations must have an 
   //explicit constructor
@@ -39,7 +40,8 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
   }
 
   public String autenticarUsuario(String login, String clave)throws java.rmi.RemoteException {
-    return a.autenticarUsuario(login, clave);
+		String alias = a.autenticarUsuario(login, clave);
+    return alias;
   }
 
 
@@ -61,9 +63,6 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
   }
 
   public void agregarMensaje(String usu, String mensaje) throws java.rmi.RemoteException{
-    if (usu == null)
-      System.out.println("usu es nulo chamo..");
-
     infoUsuario inf = usuarios.get(usu);
 
     if (!inf.getAutenticado())
@@ -112,15 +111,33 @@ public class MsgImpl extends java.rmi.server.UnicastRemoteObject implements Msg 
     return "No se encuentra el usuario especificado";
   }
 
-  public String getUsuarios() throws java.rmi.RemoteException{
-    String aliases = "Usuarios del sistema: \n ", str;
+  public String getUsuariosCA() throws java.rmi.RemoteException{
+    String aliases = "Usuarios conectados y autenticados: \n ", str;
     Set set = usuarios.keySet();
     Iterator itr = set.iterator();
     while (itr.hasNext()) {
-      aliases = aliases + " *" + itr.next();
+			String alias = (String) itr.next();
+			infoUsuario iu = usuarios.get(alias);
+			if (iu.getConectado() && iu.getAutenticado())
+      	aliases = aliases + " *" + alias;
     }
     return aliases;
   }
+
+  public String getUsuariosNCA() throws java.rmi.RemoteException{
+    String aliases = "Usuarios no conectados o autenticados: \n ", str;
+    Set set = usuarios.keySet();
+    Iterator itr = set.iterator();
+    while (itr.hasNext()) {
+			String alias = (String) itr.next();
+			infoUsuario iu = usuarios.get(alias);
+			if (!iu.getConectado() || !iu.getAutenticado())
+      	aliases = aliases + " *" + alias + " con un tiempo de " + iu.getIntervalo() + "\n";
+    }
+    return aliases;
+  }
+
+
 
   public boolean isAutenticado(String alias) throws java.rmi.RemoteException{
     infoUsuario iu = usuarios.get(alias);
