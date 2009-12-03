@@ -30,7 +30,10 @@ public class difu {
           else if (fromS.equals("q"))
             System.exit(1);
           else if (fromS.equals("v"))
-            System.out.println(c.pruebaAute());
+            if (c.pruebaAute())
+              System.out.println("El servidor de autenticacion se encuentra disponible.");
+            else
+              System.out.println("El servidor no se encuentra disponible.");
         }
       }
       System.out.println("Hasta luego.");

@@ -34,11 +34,8 @@ public class aute {
 			alias = child.getChildAtIndex(2).getContent();
 			us1[0] = clave;
 			us1[1] = alias;
-			System.out.println(login+" "+us1[0]+" "+us1[1]);
 			hash.put(login, us1);
 		}
-
-			System.out.println("fin");
 		return hash;
 	}
   

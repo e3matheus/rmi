@@ -13,8 +13,8 @@ public class AutenticadorImpl extends java.rmi.server.UnicastRemoteObject
 		super();
 		this.lc = lc;
 	}
-
-  public String autenticarUsuario(String login, String clave) throws java.rmi.RemoteException {
+	
+	public String autenticarUsuario(String login, String clave) throws java.rmi.RemoteException {
 		String challenge = login + "28";
 		
 		if (state == WAITING) {
@@ -38,35 +38,21 @@ public class AutenticadorImpl extends java.rmi.server.UnicastRemoteObject
 						}
 						String sclave = sb.toString();
 						if  (sclave.equals(clave)) {
-						//	System.out.println("login: '"+login+"' clave: '"+clave+"' alias: '"+inf[1]+"' Autenticacion Exitosa");
+							System.out.println("login: '"+login+"' clave: '"+clave+"' alias: '"+inf[1]+"' Autenticacion Exitosa");
 							return inf[1];
 						} else {
-						//	System.out.println("login: '"+login+"' clave: '"+clave+"' alias: '"+inf[1]+"' Autenticacion Fallo: Clave Incorrecta");
+							System.out.println("login: '"+login+"' clave: '"+clave+"' alias: '"+inf[1]+"' Autenticacion Fallo: Clave Incorrecta");
 							return "";
 						}
 					} catch (Exception e) {
 						System.out.println(e);
 					}
 				} else {
-					//System.out.println("login: '"+login+"' clave: '"+clave+"' Autenticacion Fallo: No se encuentra el login especificado");
+					System.out.println("login: '"+login+"' clave: '"+clave+"' Autenticacion Fallo: No se encuentra el login especificado");
 					return null;
 				}
 			}
 		return null;
-	}
-	
-	public String autenticarUsuario2(String login, String clave) throws java.rmi.RemoteException {
-		if (lc.containsKey(login)) {
-		   String[] inf = (String[]) lc.get(login);
-		   String claveUsu = inf[0];
-		   if (claveUsu.equals(clave)) {
-			   return inf[1];
-		   } else {
-			   return "";
-		   }
-		} else {
-		     return null;
-		}
 	}
 	
 	public LinkedList<String> getAliases() {

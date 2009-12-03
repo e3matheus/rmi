@@ -17,7 +17,7 @@ extends java.rmi.Remote {
 
   public String agregarSuscriptor(String usu, String susc)throws java.rmi.RemoteException;
 
-  public String autenticarUsuario(String login, String clave)throws java.rmi.RemoteException ;
+  public String autenticarUsuario(String login, String clave) throws java.rmi.RemoteException ;
 
   public String getUsuariosCA() throws java.rmi.RemoteException;
   

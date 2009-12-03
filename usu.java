@@ -4,25 +4,43 @@ import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.util.*;
 import java.io.*;
+import java.security.*;
 
 public class usu {
   static String i;
 
   static String autenticarU(Msg c, String login, String clave, ThreadGroup gpt) throws java.rmi.RemoteException {
-    String alias = c.autenticarUsuario(login,clave);
-    if (alias == null) {
-      System.out.println("No se encuentra el login especificado!");
-      return "";
-    } else 
-      if (alias.equals("")) {
-        System.out.println("Clave incorrecta!");
-        return alias;
-      } else {
-        c.conectaUsu(alias);
-        new PrintThread(gpt, alias, c).start();
-        System.out.println("Ha sido autenticado exitosamente en el sistema");
-        return alias;
-      }
+	String challenge = c.autenticarUsuario(login, null);
+	String ccf = "", clavecf = ""; 
+	byte[] hash = null;
+	try {
+		ccf = clave + challenge;
+		MessageDigest t_md5 = MessageDigest.getInstance("MD5");
+		t_md5.update(ccf.getBytes());
+		byte[] pass = t_md5.digest();
+		StringBuffer sb = new StringBuffer();
+		for( int i = 0 ; i < pass.length ; i++ ) {
+			String t = "0"+Integer.toHexString( (0xff & pass[i]));
+			sb.append(t.substring(t.length()-2));
+		}
+		clavecf = sb.toString();
+	} catch (Exception e) {
+		System.out.println(e);
+	}
+	String alias = c.autenticarUsuario(login,clavecf);
+	if (alias == null) {
+		System.out.println("No se encuentra el login especificado!");
+		return "";
+	} else 
+		if (alias.equals("")) {
+			System.out.println("Clave incorrecta!");
+			return alias;
+		} else {
+			c.conectaUsu(alias);
+			new PrintThread(gpt, alias, c).start();
+			System.out.println("Ha sido autenticado exitosamente en el sistema");
+			return alias;
+		}
   }
 
   public static boolean verificarComando(String comando){
@@ -157,7 +175,7 @@ public class usu {
 					System.out.println("terminando..");	
         if (autenticado)
           c.desconectaUsu(aliasUsu);
-      } else if (clientRequest.startsWith ("x")) {
+      } else if (autenticado && clientRequest.startsWith ("x")) {
           gpt.interrupt();
           c.desautentica(aliasUsu);
 					System.out.println("Desautenticado " + aliasUsu);
@@ -194,7 +212,9 @@ public class usu {
         }
         System.out.println("Mensaje enviado");
       }
-    } catch (java.io.InterruptedIOException ie) {
+      else if (!autenticado && (clientRequest.equals("a") || clientRequest.equals("x") || clientRequest.equals("f") || clientRequest.equals("s") || clientRequest.equals("s") || clientRequest.equals("m"))) {
+          System.out.println("Necesita estar autenticado para usar el comando.");
+    } }catch (java.io.InterruptedIOException ie) {
       gpt.interrupt();
     } catch (IOException e) {
       System.out.println("Excepcion E/S en RESPONSE en la construccion del buffer de entrada o el de salida del socket del cliente: " + e);
